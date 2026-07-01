@@ -8,8 +8,7 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
-  device_preview: 
-    path: ../../device_preview
+  device_preview: ^1.0.0
   flutter:
     sdk: flutter
   path: ^1.8.0
