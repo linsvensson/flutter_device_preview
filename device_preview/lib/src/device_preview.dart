@@ -49,7 +49,7 @@ import 'views/small.dart';
 class DevicePreview extends StatefulWidget {
   /// Create a new [DevicePreview].
   const DevicePreview({
-    Key? key,
+    super.key,
     required this.builder,
     this.devices,
     this.data,
@@ -61,7 +61,7 @@ class DevicePreview extends StatefulWidget {
     this.enabled = true,
     this.backgroundColor,
     this.padding,
-  }) : super(key: key);
+  });
 
   /// If not [enabled], the [child] is used directly.
   final bool enabled;
@@ -132,10 +132,11 @@ class DevicePreview extends StatefulWidget {
   _DevicePreviewState createState() => _DevicePreviewState();
 
   /// The currently selected device.
+  ///
+  /// This method returns the current device without subscribing to changes,
+  /// so it is safe to call from callbacks such as button presses.
   static DeviceInfo selectedDevice(BuildContext context) {
-    return context.select(
-      (DevicePreviewStore store) => store.deviceInfo,
-    );
+    return context.read<DevicePreviewStore>().deviceInfo;
   }
 
   /// The simulated target platform for the currently selected device.
@@ -235,10 +236,7 @@ class DevicePreview extends StatefulWidget {
   ///
   /// If [enablePreview] is set to `true`, then the device preview is also enabled
   /// when appearing.
-  static void showToolbar(
-    BuildContext context, {
-    bool enablePreview = true,
-  }) {
+  static void showToolbar(BuildContext context, {bool enablePreview = true}) {
     final store = Provider.of<DevicePreviewStore>(context);
     store.data = store.data.copyWith(
       isToolbarVisible: true,
@@ -250,10 +248,7 @@ class DevicePreview extends StatefulWidget {
   ///
   /// If [disablePreview] is set to `false`, then the device preview stays active even
   /// if the toolbar is not visible anymore.
-  static void hideToolbar(
-    BuildContext context, {
-    bool disablePreview = true,
-  }) {
+  static void hideToolbar(BuildContext context, {bool disablePreview = true}) {
     final store = Provider.of<DevicePreviewStore>(context);
     store.data = store.data.copyWith(
       isToolbarVisible: false,
@@ -351,8 +346,8 @@ class DevicePreview extends StatefulWidget {
 
     return mediaQuery.copyWith(
       platformBrightness: isDarkMode ? Brightness.dark : Brightness.light,
-      textScaleFactor: textScaleFactor,
       boldText: boldText,
+      textScaler: TextScaler.linear(textScaleFactor),
       disableAnimations: disableAnimations,
       accessibleNavigation: accessibleNavigation,
       invertColors: invertColors,
@@ -381,9 +376,7 @@ class _DevicePreviewState extends State<DevicePreview> {
     final image = await boundary.toImage(
       pixelRatio: store.deviceInfo.pixelRatio,
     );
-    final byteData = await image.toByteData(
-      format: format,
-    );
+    final byteData = await image.toByteData(format: format);
     final bytes = byteData!.buffer.asUint8List();
     final screenshot = DeviceScreenshot(
       device: store.deviceInfo,
@@ -438,7 +431,8 @@ class _DevicePreviewState extends State<DevicePreview> {
 
     return Container(
       color: widget.backgroundColor ?? theme.canvasColor,
-      padding: widget.padding ??
+      padding:
+          widget.padding ??
           EdgeInsets.only(
             top: 20 + mediaQuery.viewPadding.top,
             right: 20 + mediaQuery.viewPadding.right,
@@ -485,10 +479,7 @@ class _DevicePreviewState extends State<DevicePreview> {
   @override
   Widget build(BuildContext context) {
     if (!widget.enabled) {
-      return Builder(
-        key: _appKey,
-        builder: widget.builder,
-      );
+      return Builder(key: _appKey, builder: widget.builder);
     }
 
     return ChangeNotifierProvider(
@@ -507,10 +498,7 @@ class _DevicePreviewState extends State<DevicePreview> {
         );
 
         if (!isInitialized) {
-          return Builder(
-            key: _appKey,
-            builder: widget.builder,
-          );
+          return Builder(key: _appKey, builder: widget.builder);
         }
 
         final isEnabled = context.select(
@@ -525,7 +513,8 @@ class _DevicePreviewState extends State<DevicePreview> {
           (DevicePreviewStore store) => store.settings.backgroundTheme,
         );
 
-        final isToolbarVisible = widget.isToolbarVisible &&
+        final isToolbarVisible =
+            widget.isToolbarVisible &&
             context.select(
               (DevicePreviewStore store) => store.data.isToolbarVisible,
             );
@@ -560,11 +549,12 @@ class _DevicePreviewState extends State<DevicePreview> {
                         : BorderRadius.zero;
                     final double rightPanelOffset = !isSmall
                         ? (isEnabled
-                            ? ToolPanel.panelWidth - 10
-                            : (64 + mediaQuery.padding.right))
+                              ? ToolPanel.panelWidth - 10
+                              : (64 + mediaQuery.padding.right))
                         : 0;
-                    final double bottomPanelOffset =
-                        isSmall ? mediaQuery.padding.bottom + 52 : 0;
+                    final double bottomPanelOffset = isSmall
+                        ? mediaQuery.padding.bottom + 52
+                        : 0;
                     return Stack(
                       children: <Widget>[
                         if (isToolbarVisible && isSmall)
@@ -612,9 +602,7 @@ class _DevicePreviewState extends State<DevicePreview> {
                               child: ClipRRect(
                                 borderRadius: borderRadius,
                                 child: isEnabled
-                                    ? Builder(
-                                        builder: _buildPreview,
-                                      )
+                                    ? Builder(builder: _buildPreview)
                                     : Builder(
                                         key: _appKey,
                                         builder: widget.builder,
